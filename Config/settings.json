@@ -1,0 +1,9 @@
+{
+  "_comment": "Конфигурация главного скрипта обработки файлов",
+  "version": "1.0.0",
+  "directories": {
+    "logs": "D:\\powershell\\FailedOperations\\Logs",
+    "scripts": "D:\\powershell\\FailedOperations\\Scripts",
+    "utils": "D:\\powershell\\FailedOperations\\Utils"
+  }
+}
