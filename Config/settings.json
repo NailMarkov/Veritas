@@ -2,8 +2,14 @@
   "_comment": "Конфигурация главного скрипта обработки файлов",
   "version": "1.0.0",
   "directories": {
-    "logs": "D:\\powershell\\FailedOperations\\Logs",
-    "scripts": "D:\\powershell\\FailedOperations\\Scripts",
-    "utils": "D:\\powershell\\FailedOperations\\Utils"
+    "logs": "\\Logs",
+    "scripts": "\\Scripts",
+    "utils": "\\Utils",
+    "logfiles": {
+      "anyway": "\\LogFiles\\Anyway_Error",
+      "cashin": "\\LogFiles\\Cashin_Error",
+      "cashout": "\\LogFiles\\Cashout_Error",
+      "other": "\\LogFiles\\Other_Error"
+    }
   }
 }
