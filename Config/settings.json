@@ -2,14 +2,28 @@
   "_comment": "Конфигурация главного скрипта обработки файлов",
   "version": "1.0.0",
   "directories": {
-    "logs": "\\Logs",
-    "scripts": "\\Scripts",
-    "utils": "\\Utils",
     "logfiles": {
       "anyway": "\\LogFiles\\Anyway_Error",
       "cashin": "\\LogFiles\\Cashin_Error",
       "cashout": "\\LogFiles\\Cashout_Error",
       "other": "\\LogFiles\\Other_Error"
-    }
+    },
+    "logs": "\\Logs",
+    "modules": {
+      "analysis": "\\Modules\\AnalysisTools"
+    },
+    "operations": {
+      "archive": "\\Operations\\Archive",
+      "data": "\\Operations\\Data",
+      "temp": "\\Operations\\Temp"
+    },
+    "scripts": "\\Scripts",
+    "utils": "\\Utils"    
+  },
+  "scripts": {
+    "anyway": "Anyway",
+    "cashin": "Cashin",
+    "cashout": "Cashout",
+    "other": "Other"
   }
 }

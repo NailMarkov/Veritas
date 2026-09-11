@@ -37,14 +37,14 @@ begin {
   $currentDir = $PSScriptRoot
 
   # Подключаем функцию логирования
-  . .\Utils\logger.ps1
+  . .\Utils\Logger.ps1
 
   # Загружаем настройки 
   $configPath = Join-Path $currentDir "Config\settings.json"
   $config = Get-Content -Path $configPath -Raw | ConvertFrom-Json
 
   # Загружаем модуль
-  $modulePath = Join-Path $currentDir "Modules\functions.psm1"
+  $modulePath = Join-Path $currentDir "$($config.directories.modules.analysis)\AnalysisTools.psm1"
   Import-Module $modulePath -Force
 
   # Проверяем наличие лог файла и его размер
@@ -77,7 +77,8 @@ begin {
   }
 
   Write-Log -Message "Создаю массив папок с логами..." -Level "INFO"
-  # Список папок для проверки (укажите свои пути)
+  
+  # Список папок для проверки
   $folders = foreach ($prop in $config.directories.logfiles.PSObject.Properties) {
     $relativePath = $prop.Value.TrimStart('\')
     Join-Path -Path $currentDir -ChildPath $relativePath
@@ -107,6 +108,14 @@ process {
         Write-Log -Message "Файлы найдены!" -Level "INFO"
         Write-Log -Message "Количество файлов: $fileCount" -Level "INFO"
         Write-Log -Message "Общий размер: $totalSizeMB МБ ($totalSizeByte байт)" -Level "INFO"
+
+        switch -Wildcard ($folder) {
+          "*Anyway*"  { & ".\Scripts\Find-$($config.scripts.anyway)Error.ps1" -Path $currentDir }
+          "*Cashin*"  { & ".\Scripts\Find-$($config.scripts.cashin)Error.ps1" -Path $currentDir }
+          "*Cashout*" { & ".\Scripts\Find-$($config.scripts.cashout)Error.ps1" -Path $currentDir }
+          "*Other*"   { & ".\Scripts\Find-$($config.scripts.other)Error.ps1" -Path $currentDir }
+          default     { Write-Log "Нет скрипта для $currentDir" -Level "WARNING" }
+        }
       }
       else {
         Write-Log -Message "Папка пуста (файлов нет)." -Level "WARNING"

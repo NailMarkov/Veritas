@@ -1,7 +1,7 @@
 # Экспортируемые функции
 
 # Подключаем функцию логирования
-. .\Utils\logger.ps1
+. .\Utils\Logger.ps1
 
 function Start-Loging {
   param(
