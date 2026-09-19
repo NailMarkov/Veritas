@@ -36,8 +36,11 @@ begin {
   # Получаем путь к папке, где запущен текущий скрипт
   $currentDir = $PSScriptRoot
 
-  # Подключаем функцию логирования
-  . .\Utils\Logger.ps1
+  # Подключаем дополнительные функции 
+  $UtilsFolders = Join-Path $currentDir "Utils"
+  Get-ChildItem -Path $UtilsFolders -Filter "*.ps1" | ForEach-Object {
+    . $_.FullName
+  }
 
   # Загружаем настройки 
   $configPath = Join-Path $currentDir "Config\settings.json"
@@ -105,9 +108,7 @@ process {
         $totalSizeByte = ($files | Measure-Object -Property Length -Sum).Sum
         $totalSizeMB = [Math]::Round($totalSizeByte / 1MB, 2)
 
-        Write-Log -Message "Файлы найдены!" -Level "INFO"
-        Write-Log -Message "Количество файлов: $fileCount" -Level "INFO"
-        Write-Log -Message "Общий размер: $totalSizeMB МБ ($totalSizeByte байт)" -Level "INFO"
+        Write-Log -Message "Количество найденых файлов: $fileCount" -Level "INFO"
 
         switch -Wildcard ($folder) {
           "*Anyway*"  { & ".\Scripts\Find-$($config.scripts.anyway)Error.ps1" -Path $currentDir }
@@ -116,11 +117,18 @@ process {
           "*Other*"   { & ".\Scripts\Find-$($config.scripts.other)Error.ps1" -Path $currentDir }
           default     { Write-Log "Нет скрипта для $currentDir" -Level "WARNING" }
         }
+
+        $totalFiles = [pscustomobject]@{
+          time = $(Get-Date -Format 'dd-MM-yyyy HH:mm')
+          log = Split-Path $folder -Leaf 
+          count = $fileCount
+          size = $totalSizeMB
+        }
+        Add-ToCsv -Data $totalFiles -Delimiter ";" -FileName "system" -Directory ".$($config.directories.operations.data)"
       }
       else {
-        Write-Log -Message "Папка пуста (файлов нет)." -Level "WARNING"
+        Write-Log -Message "Файлы не найдены" -Level "WARNING"
       }
-
     }
     else {
       Write-Log -Message "Папка не существует по указанному пути." -Level "ERROR"
