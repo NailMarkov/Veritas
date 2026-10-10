@@ -1,3 +1,36 @@
+<#
+  .SYNOPSIS
+    Скрипт перемещения файлов.
+
+  .DESCRIPTION
+    Создает папку с текущей датой в директории Operations\Archive\YYYY-MM-DD.
+    Создает подпапки в созданной папке(\EjdataFiles, \NdcFiles, \PrjFiles).
+    Фиксирует детальные результаты (INFO, WARNING, ERROR) в журнале событий.
+
+    Блок begin (Инициализация):
+    - Определяет рабочую директорию и преобразует относительные пути в абсолютные;
+    - Подключает функцию логирования (logger.ps1);
+    - Загружает файл настроек (settings.json);
+    - Создает папку с текущей датой(YYYY-MM-DD);
+    - Создает объект с названием подпапок($extensionsMap);
+
+    Блок process (Основной функционал):
+    - Выполняет создание подпапок в папке текущего дня;
+    - Подсчитывает общее количество файлов и вычисляет их суммарный размер в байтах и мегабайтах (МБ);
+    - Выполняет запуск скрипта в зависимости от найденных файлов в папках;
+    - Записывает информацию о файлах в формате CSV(Operations\Data\system_yyyy-mm-dd.csv); 
+    
+  .NOTES
+    Требования к окружению:
+    - PowerShell версии 3.0 или выше.
+    - Права на чтение файлов в проверяемых директориях.
+    - Права на запись в директорию хранения логов скрипта.
+    
+    Ожидаемая структура зависимостей относительно корня скрипта:
+    - Utils\ — содержит скрипт logger.ps1
+    - Config\ — содержит файл настроек settings.json
+#>
+
 begin {
   # Получаем путь к папке, где запущен текущий скрипт
   $currentDir = $PSScriptRoot
@@ -9,38 +42,74 @@ begin {
   $configPath = Join-Path $currentDir "Config\settings.json"
   $config = Get-Content -Path $configPath -Raw | ConvertFrom-Json
 
+  # Создаем структуру папок
+  $year = (Get-Date).Year
+
+  # Список месяцев
+  $months = @(
+    "Январь","Февраль","Март","Апрель","Май","Июнь",
+    "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"
+  )
+
+  $monthNum = (Get-Date).Month
+  $folderMonth = $months[$monthNum - 1]
+
   # Создаем папку с текущей датой
-  $CurrentDate = Get-Date -Format "yyyy-MM-dd"
-  $PathArchive = Join-Path -Path $currentDir $($config.directories.operations.archive)
-  $TodayMainFolder = Join-Path -Path $PathArchive -ChildPath $CurrentDate
+  $currentDate = Get-Date -Format "yyyy-MM-dd"
+  $dayFolder = Join-Path -Path $currentDir "$($config.directories.operations.archive)\$folderMonth"
+  $todayMainFolder = Join-Path -Path $dayFolder -ChildPath $currentDate
 
   # Список расширений и папок для них
-  $ExtensionsMap = @{
+  $extensionsMap = @{
     "prj"    = "PrjFiles"
     "ndc"    = "NdcFiles"
     "ejdata" = "EjdataFiles"
-  }
+  } 
 }
 
 process {
-  # Создаем главную папку дня и подпапки в ней
-  foreach ($SubFolder in $ExtensionsMap.Values) {
-    $PathToCreate = Join-Path -Path $TodayMainFolder -ChildPath $SubFolder
-    if (-not (Test-Path -Path $PathToCreate)) {
-      New-Item -Path $PathToCreate -ItemType Directory -Force | Out-Null
+  function Add-Folder {
+    param (
+      [string]$Folder
+    )
+    $pathFolder = Join-Path -Path $currentDir "$($config.directories.operations.archive)\$Folder"
+
+    if (-not (Test-Path $pathFolder)) {
+      New-Item -Path $pathFolder -ItemType Directory
+      Write-log -Message "Создана папка: $pathFolder" -Level "INFO"
+    } else {
+      Write-log -Message "Папка уже существует: $pathFolder" -Level "WARNING"
     }
   }
 
-  # Поиск и перемещение файлов
-  foreach ($Extension in $ExtensionsMap.Keys) {
-    $SubFolder = $ExtensionsMap[$Extension]
-    $DestinationPath = Join-Path -Path $TodayMainFolder -ChildPath $SubFolder
-    
-    # Ищем файлы только в исходной папке (без подпапок)
-    $FilesToMove = Get-ChildItem -Path $SourceFolder -Filter "*.$Extension" -File
-    
-    foreach ($File in $FilesToMove) {
-      Move-Item -Path $File.FullName -Destination $DestinationPath -Force
+  try {
+    Add-Folder -Folder $folderMonth
+    Add-Folder -Folder $year
+      
+    # Создаем подпапки в текущей папке дня
+    foreach ($subFolder in $extensionsMap.Values) {
+      $pathToCreate = Join-Path -Path $todayMainFolder -ChildPath $subFolder
+      Write-log -Message "Создана папка для файлов: $subFolder" -Level "INFO"
+
+      if (-not (Test-Path -Path $pathToCreate)) {
+        New-Item -Path $pathToCreate -ItemType Directory -Force | Out-Null
+      }
     }
+
+    # Поиск и перемещение файлов
+    foreach ($extension in $extensionsMap.Keys) {
+      $subFolder = $extensionsMap[$extension]
+      $DestinationPath = Join-Path -Path $todayMainFolder -ChildPath $subFolder
+    
+      # Ищем файлы только в исходной папке (без подпапок)
+      $FilesToMove = Get-ChildItem -Path $SourceFolder -Filter "*.$extension" -File
+    
+      foreach ($File in $FilesToMove) {
+        Move-Item -Path $File.FullName -Destination $DestinationPath -Force
+      }
+    }
+  }
+  catch {
+    Write-Log -Message "Ошибка: $($_.Exception.Message)" -Level "ERROR"
   }
 }
