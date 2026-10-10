@@ -10,13 +10,13 @@ function Start-Loging {
     [int]$Part = 1
   )
 
-  $title = @(
+  $Title = @(
     "===========================================",
     "=== Старт логирования: $((Get-Date).ToString('dd-MM-yyyy HH:mm')) ===",
     "=== Часть $Part                             ==="
     "==========================================="
   )
-  $title | Set-Content $LogPath\$File -Encoding UTF8
+  $Title | Set-Content $LogPath\$File -Encoding UTF8
 }
 
 function Find-Number {

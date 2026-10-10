@@ -42,8 +42,7 @@
 
 . .\Utils\Logger.ps1
 
-# ── Преобразование входных данных в массив объектов (строк) ────────────────
-
+# Преобразование входных данных в массив объектов (строк)
 function ConvertTo-Rows {
   param(
     [object]$InputData,
@@ -59,7 +58,7 @@ function ConvertTo-Rows {
   foreach ($item in $items) {
     if ($item -is [PSCustomObject]) {
       Write-Log -Message "Обрабатываю тип данных PSCustomObject..." -Level "INFO"
-      # PSCustomObject
+
       if ($headers.Count -eq 0) {
         $headers = @($item.PSObject.Properties.Name)
       }
@@ -78,8 +77,7 @@ function ConvertTo-Rows {
   return @{ Rows = $rows; Headers = $headers }
 }
 
-# ── Формирование пути к файлу с именем текущего дня ────────────────────────
-
+# Формирование пути к файлу с именем текущего дня 
 function Get-TodayFilePath {
   param(
     [string]$Directory,
@@ -92,7 +90,7 @@ function Get-TodayFilePath {
   return Join-Path -Path $Directory -ChildPath $name
 }
 
-# ── Основная логика ────────────────────────────────────────────────────────
+# Основная логика
 
 function Add-ToCsv {
   param(
@@ -100,7 +98,6 @@ function Add-ToCsv {
     [object]$Data,
     [string]$Directory = ".\data",
     [string]$FileName = "",
-    [string[]]$Columns,
     [string]$Delimiter = ",",
     [string]$DateFormat = "yyyy-MM-dd",
     [string]$Encoding = "UTF8"
@@ -116,16 +113,12 @@ function Add-ToCsv {
 
     # Определяем заголовки
     $finalHeaders = @()
-    if ($Columns -and $Columns.Count -gt 0) {
-      $finalHeaders = $Columns
-    }
-    elseif ($objectHeaders.Count -gt 0) {
+    if ($objectHeaders.Count -gt 0) {
       $finalHeaders = $objectHeaders
     }
 
     # Формируем путь к файлу
     $filePath = Get-TodayFilePath -Directory $Directory -Prefix $FileName -DateFormat $DateFormat
-    Write-Host $filePath
 
     # Создаём директорию
     if (-not (Test-Path -Path $Directory)) {

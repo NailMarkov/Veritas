@@ -10,7 +10,8 @@
     },
     "logs": "\\Logs",
     "modules": {
-      "analysis": "\\Modules\\AnalysisTools"
+      "analysis": "\\Modules\\AnalysisTools",
+      "filesystems": "\\Modules\\FileSystemsTools"
     },
     "operations": {
       "archive": "\\Operations\\Archive",
