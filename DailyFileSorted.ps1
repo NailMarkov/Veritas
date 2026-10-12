@@ -42,6 +42,10 @@ begin {
   $configPath = Join-Path $currentDir "Config\settings.json"
   $config = Get-Content -Path $configPath -Raw | ConvertFrom-Json
 
+  # Загружаем модуль
+  $modulePath = Join-Path $currentDir "$($config.directories.modules.filesystems)\FileSystemsTools.psm1"
+  Import-Module $modulePath -Force
+
   # Создаем структуру папок
   $year = (Get-Date).Year
 
@@ -59,6 +63,8 @@ begin {
   $dayFolder = Join-Path -Path $currentDir "$($config.directories.operations.archive)\$folderMonth"
   $todayMainFolder = Join-Path -Path $dayFolder -ChildPath $currentDate
 
+  $sourceFile = Join-Path -Path $currentDir "$($config.directories.operations.files)"
+
   # Список расширений и папок для них
   $extensionsMap = @{
     "prj"    = "PrjFiles"
@@ -75,7 +81,7 @@ process {
     $pathFolder = Join-Path -Path $currentDir "$($config.directories.operations.archive)\$Folder"
 
     if (-not (Test-Path $pathFolder)) {
-      New-Item -Path $pathFolder -ItemType Directory
+      New-Item -Path $pathFolder -ItemType Directory | Out-Null
       Write-log -Message "Создана папка: $pathFolder" -Level "INFO"
     } else {
       Write-log -Message "Папка уже существует: $pathFolder" -Level "WARNING"
@@ -96,18 +102,7 @@ process {
       }
     }
 
-    # Поиск и перемещение файлов
-    foreach ($extension in $extensionsMap.Keys) {
-      $subFolder = $extensionsMap[$extension]
-      $DestinationPath = Join-Path -Path $todayMainFolder -ChildPath $subFolder
-    
-      # Ищем файлы только в исходной папке (без подпапок)
-      $FilesToMove = Get-ChildItem -Path $SourceFolder -Filter "*.$extension" -File
-    
-      foreach ($File in $FilesToMove) {
-        Move-Item -Path $File.FullName -Destination $DestinationPath -Force
-      }
-    }
+    Move-Files -GenericData $extensionsMap -DestinationPath $todayMainFolder -SourcePath $sourceFile
   }
   catch {
     Write-Log -Message "Ошибка: $($_.Exception.Message)" -Level "ERROR"
