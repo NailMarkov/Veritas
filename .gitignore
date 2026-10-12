@@ -1,4 +1,5 @@
-LogFiles/
-Logs/
 Operations/Data/Incass
 *.csv
+*.log
+*.PRJ
+*.ndc
