@@ -48,14 +48,17 @@ begin {
 
   # Создаем структуру папок
   $folderYear = (Get-Date).Year
+  $currentDay = (Get-Date).Day
 
   # Список месяцев
   $months = @(
-    "Январь","Февраль","Март","Апрель","Май","Июнь",
-    "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
   )
 
+  # Создаем название текущего и предыдущего месяца
   $monthNum = (Get-Date).Month
+  $prevFolderMonth = $months[$monthNum - 2]
   $folderMonth = $months[$monthNum - 1]
 
   # Создаем папку с текущей датой
@@ -83,9 +86,23 @@ process {
     if (-not (Test-Path $pathFolder)) {
       New-Item -Path $pathFolder -ItemType Directory | Out-Null
       Write-log -Message "Создана папка: $pathFolder" -Level "INFO"
-    } else {
+    }
+    else {
       Write-log -Message "Папка уже существует: $pathFolder" -Level "WARNING"
     }
+  }
+
+  function Move-Folder {
+    param (
+      [Parameter(Mandatory = $true)]
+      [string]$SourceFolder,
+
+      [Parameter(Mandatory = $true)]
+      [string]$DestinationFolder
+    )
+    $folderName = Split-Path -Path $SourceFolder -Leaf
+    Move-Item -Path $SourceFolder -Destination $DestinationFolder
+    Write-Log -Message "Папка $folderName перемещена в директорию $DestinationFolder" -Level "INFO"
   }
 
   try {
@@ -100,12 +117,25 @@ process {
       if (-not (Test-Path -Path $pathToCreate)) {
         New-Item -Path $pathToCreate -ItemType Directory -Force | Out-Null
         Write-log -Message "Создана папка для файлов: $subFolder" -Level "INFO"
-      } else {
+      }
+      else {
         Write-log -Message "Папка уже существует: $subFolder" -Level "WARNING"
       }
     }
 
     Move-Files -GenericData $extensionsMap -DestinationPath $todayMainFolder -SourcePath $sourceFile
+
+    $pathYear = Join-Path -Path $currentDir "$($config.directories.operations.archive)\$folderYear"
+
+    if ($currentDay -eq 14) {
+      if (-not ($monthNum -eq 1)) {
+        Move-Folder -SourceFolder $dayFolder -DestinationFolder $pathYear
+      }
+      else {
+        $prevYear = $folderYear - 1
+        Add-Folder -Folder $prevYear
+      }
+    }
   }
   catch {
     Write-Log -Message "Ошибка: $($_.Exception.Message)" -Level "ERROR"
