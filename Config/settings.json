@@ -17,7 +17,7 @@
       "archive": "\\Operations\\Archive",
       "data": "\\Operations\\Data",
       "temp": "\\Operations\\Temp",
-      "files": "\\Operations\\File"
+      "files": "\\Operations\\Files"
     },
     "scripts": "\\Scripts",
     "utils": "\\Utils"    

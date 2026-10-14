@@ -47,7 +47,7 @@ begin {
   Import-Module $modulePath -Force
 
   # Создаем структуру папок
-  $year = (Get-Date).Year
+  $folderYear = (Get-Date).Year
 
   # Список месяцев
   $months = @(
@@ -89,16 +89,19 @@ process {
   }
 
   try {
+    # Создает папки если их не существует
+    Add-Folder -Folder $folderYear
     Add-Folder -Folder $folderMonth
-    Add-Folder -Folder $year
       
-    # Создаем подпапки в текущей папке дня
+    # Создает подпапки в текущей папке дня
     foreach ($subFolder in $extensionsMap.Values) {
       $pathToCreate = Join-Path -Path $todayMainFolder -ChildPath $subFolder
-      Write-log -Message "Создана папка для файлов: $subFolder" -Level "INFO"
 
       if (-not (Test-Path -Path $pathToCreate)) {
         New-Item -Path $pathToCreate -ItemType Directory -Force | Out-Null
+        Write-log -Message "Создана папка для файлов: $subFolder" -Level "INFO"
+      } else {
+        Write-log -Message "Папка уже существует: $subFolder" -Level "WARNING"
       }
     }
 
